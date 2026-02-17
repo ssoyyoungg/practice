@@ -1,0 +1,83 @@
+<CIFAR-10 UPGRADE>
+  <CNN 모델>
+    1. 실험 목적 : CIFAR-10 데이터셋에서 기본 CNN 모델의 분류 성능을 평가하고,
+                  Confusion Matrix와 오답 샘플 분석을 통해 모델의 한계를 파악
+    <BAISC  Epoch 5 기준>
+      Epoch 1 | /Train Loss : 1.3371 | Test Acc : 62.00%
+      Epoch 2 | /Train Loss : 0.9558 | Test Acc : 67.44%
+      Epoch 3 | /Train Loss : 0.8013 | Test Acc : 70.10%
+      Epoch 4 | /Train Loss : 0.6879 | Test Acc : 71.26%
+      Epoch 5 | /Train Loss : 0.5860 | Test Acc : 72.46%
+    <Nomalize + 데이터 증강(argumentation) 사용 Epoch 5 기준>
+      Epoch 1 | /Train Loss : 1.5363 | Test Acc : 57.80%
+      Epoch 2 | /Train Loss : 1.2055 | Test Acc : 63.45%
+      Epoch 3 | /Train Loss : 1.0664 | Test Acc : 66.76%
+      Epoch 4 | /Train Loss : 0.9910 | Test Acc : 68.58%
+      Epoch 5 | /Train Loss : 0.9356 | Test Acc : 69.07%
+      * CIFAR-10에서 데이터 증강(RandomCrop/Flip)을 적용하면 초기 5epoch에서는 성능이 낮았으나, 
+      학습을 10epoch로 늘리자 테스트 정확도가 74.19%까지 상승하여 augmentation이 충분한 학습에서
+      일반화 성능을 개선함을 확인함.
+    <Nomalize + BatchNorm + Dropout 사용 Epoch 5 기준>  
+      Epoch 1 | /Train Loss : 1.2995 | Test Acc : 65.57%
+      Epoch 2 | /Train Loss : 0.9898 | Test Acc : 68.98%
+      Epoch 3 | /Train Loss : 0.8580 | Test Acc : 70.50%
+      Epoch 4 | /Train Loss : 0.7535 | Test Acc : 72.40%
+      Epoch 5 | /Train Loss : 0.6773 | Test Acc : 73.59%
+    <Nomalize + 데이터 증강(argumentation) +  BatchNorm + Dropout 사용 Epoch 5 기준>   
+      Epoch 1 | /Train Loss : 1.5669 | Test Acc : 59.28%
+      Epoch 2 | /Train Loss : 1.2853 | Test Acc : 65.11%
+      Epoch 3 | /Train Loss : 1.1630 | Test Acc : 68.88%
+      Epoch 4 | /Train Loss : 1.0786 | Test Acc : 69.79%
+      Epoch 5 | /Train Loss : 1.0357 | Test Acc : 71.55%
+      
+    해석 :
+       - 초기 epoch에서는 augmentation이 오히려 성능을 낮춤
+       - BN/Dropout은 안정적이지만 큰 성능 향상은 없음
+       - 기본 CNN 구조 자체가 CIFAR-10 복잡도에 비해 제한적
+      
+    <Confusion Matrix 분석>
+    전체 성능 요약 : 72 ~ 74%
+    가장 잘 분류된 클래스: car(900), ship(870), frog(761), plane(750), frog(761)
+    => veicle 계열 클래스가 강한것으로 확인됨(형태 명확, 실루엣 분명의 이유)
+    가장 큰 오분류 패턴 : dof -> cat : 202 , cat -> dog : 174
+    (저해상도 이미지, 털 텍스처 유사, 자세 다양성의 이유)
+
+    <ResNet18 모델>
+    CIFAR-10은 MNIST에 보다 다양한 이미지 데이터가 있기 때문에 CNN보다 ResNet18 모델 사용하는것이
+    좀 더 나은 실험 결과를 도출 할 것이라고 판단
+    
+  <ResNet18 모델 교체 Epoch 5 기준>
+      Epoch 1 | /Train Loss : 0.6801 | Test Acc : 85.55%
+    Epoch 2 | /Train Loss : 0.2593 | Test Acc : 87.47%
+    Epoch 3 | /Train Loss : 0.1111 | Test Acc : 88.21%
+    Epoch 4 | /Train Loss : 0.0639 | Test Acc : 87.99%
+    Epoch 5 | /Train Loss : 0.0540 | Test Acc : 88.55%
+  <ResNet18 모델 교체 + Nomalize + argument(Randomcrop, RandomHorizontaFlip) 사용 Epoch 5 기준>
+      Epoch 1 | /Train Loss : 0.7986 | Test Acc : 84.17%
+      Epoch 2 | /Train Loss : 0.4071 | Test Acc : 88.19%
+      Epoch 3 | /Train Loss : 0.2980 | Test Acc : 89.75%
+      Epoch 4 | /Train Loss : 0.2362 | Test Acc : 90.85%
+      Epoch 5 | /Train Loss : 0.1972 | Test Acc : 91.51%
+
+  <Confusion Matrix 분석>
+    전체 성능 요약 : 91.51%(CNN 대비 약 18~20% 성능 향상 확인됨)
+    가장 잘 분류된 클래스: truck(947), ship(916), bird(916), plane(913), car(909)
+    => veicle 계열 클래스가 강한것으로 확인됨(형태 명확, 실루엣 분명의 이유)
+    가장 큰 오분류 패턴 : cat → dog : 108 , dog → cat : 98, cat → deer : 102
+    (여전히 동물 클래스 간 혼동 존재)
+
+   <CNN과 비교 분석>
+    항목	        CNN	ResNet18
+    전체 정확도	  72~74%    /    91.5%
+    vehicle 계열	강함    /    매우 강함
+    동물 클래스	  매우 약함    /    개선되었으나 여전히 혼동 존재
+    표현력	제한적    /    깊은 특징 표현 가능
+
+  총정리 :
+  1. ResNet18의 Residual 구조는 깊은 네트워크에서도 gradient 소실 문제를 완화하며,
+    저수준 특징 (edge, texture), 중간 특징 (shape), 고수준 특징 (object part)
+    를 계층적으로 학습 가능하게 함.
+    그 결과 전반적 정확도가 상승, 클래스 간 경계 분리 향상, 일반화 성능 개선
+  2. ResNet18에서도 cat ↔ dog 혼동, 자연 배경 기반 클래스 간 일부 혼동이 존재함.
+     이는 저해상도 데이터 특성 세밀한 국소 특징 정보 부족 배경 영향 때문으로 판단됨.
+  3. 
