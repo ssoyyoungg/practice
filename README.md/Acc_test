@@ -1,0 +1,67 @@
+<클래스별 정확도 계산>
+airplane acc: 95.20%  (correct=952, total=1000)
+automobile acc: 94.90%  (correct=949, total=1000)
+bird acc: 91.80%  (correct=918, total=1000)
+cat acc: 85.10%  (correct=851, total=1000)
+deer acc: 91.90%  (correct=919, total=1000)
+dog acc: 78.00%  (correct=780, total=1000)
+frog acc: 89.30%  (correct=893, total=1000)
+horse acc: 94.20%  (correct=942, total=1000)
+ship acc: 95.30%  (correct=953, total=1000)
+truck acc: 94.60%  (correct=946, total=1000)
+비교적 정확도가 낮은 클래스 : cat(85.10), dog(78.00), frog(89.3)
+
+<오분류 TOP 10 리스트<클래스별 정확도 계산>
+airplane acc: 95.20%  (correct=952, total=1000)
+automobile acc: 94.90%  (correct=949, total=1000)
+bird acc: 91.80%  (correct=918, total=1000)
+cat acc: 85.10%  (correct=851, total=1000)
+deer acc: 91.90%  (correct=919, total=1000)
+dog acc: 78.00%  (correct=780, total=1000)
+frog acc: 89.30%  (correct=893, total=1000)
+horse acc: 94.20%  (correct=942, total=1000)
+ship acc: 95.30%  (correct=953, total=1000)
+truck acc: 94.60%  (correct=946, total=1000)
+비교적 정확도가 낮은 클래스 : cat(85.10), dog(78.00), frog(89.3)
+
+<오분류 TOP 10 리스트>
+Top-10 confusion pairs (True -> Pred):
+01. dog -> cat : 124
+02. frog -> bird : 41
+03. cat -> dog : 38
+04. dog -> bird : 37
+05. cat -> bird : 35
+06. truck -> automobile : 29
+07. frog -> cat : 29
+08. automobile -> truck : 27
+09. bird -> airplane : 26
+10. ship -> airplane : 25
+
+<WARNING:matplotlib.image:Clipping input data to the valid range for imshow with RGB data ([0..1] for floats or [0..255] for integers). Got range [-0.490453..1.6195644].>
+이유 : Nomalize 했던 이미지를 그대로 출력해서 생기는 현상
+
+<가장 많이 헷갈린 쌍 샘플 이미지 출력하기>
+cat -> dog
+오분류가 가장 많았고, 주로 저조도/ 측면 각도에서 촬영된 이미지에서 발견되었음
+
+
+<epoch 20으로 올린 뒤 학습>
+Test Accuracy 변화 :
+epoch 1 : 93.04
+epoch 10 : 93.15
+epoch 13 : 93.81(최고점)
+epoch 20 : 93.51
+=> 93 부근에서 수렴
+   큰 하락 없음
+
+Train Loss 변화 : 
+Epoch 1 : 0.0529
+Epoch 10 : 0.0372
+Epoch 20 : 0.0298
+=> 전체적으로 지속적인 감소함
+   학습이 안정적으로 지속됨
+   폭발 없음
+
+- ResNet18 + Augmentation 환경에서 CIFAR-10은 약 93~94% 수준에서 성능이 안정적으로 수렴함.
+Train Loss는 지속 감소하였으나 Test Accuracy는 93% 부근에서 유지되어 모델이 일반화 
+한계 근처에 도달했음을 확인함 -
