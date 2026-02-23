@@ -30,19 +30,6 @@ F1 Score
 정상이 더 많이 나오는 결과라면 자동적으로 Accuracy는 올라가지만 
 모두 정상이라고 예측하면 환자의 정확한 진단이 어려움
 
-
-< Precision / Recall / F1 score 출력 >
-
-              precision    recall  f1-score   support
-
-           0       0.97      0.98      0.98      4000
-           1       0.99      0.98      0.99      6000
-
-    accuracy                           0.98     10000
-   macro avg       0.98      0.98      0.98     10000
-weighted avg       0.98      0.98      0.98     10000
-
-
 Precision, Recall, F1-score 모두 0.98 이상을 기록함.
 특히 양성 클래스에 대한 Recall이 0.98로 높게 유지되어, 
 민감도 중심 평가 구조를 구현하였음을 확인함.
@@ -92,5 +79,36 @@ False Negative(FN)는 103건에서 60건으로 감소함.
 민감도와 특이도 간 trade-off가 존재함을 보여준다.
 의료 AI 환경에서는 FN 감소가 더욱 중요할 수 있으므로,
 임상 목적에 따라 적절한 threshold 선택이 필요한 것을 확인함.
+
+<데이터 불균형 주기 전 학습 결과 >
+
+              precision    recall  f1-score   support
+
+           0 (vehicle)       0.97      0.98      0.98      4000
+           1 (animal)       0.99      0.98      0.98      6000
+
+    accuracy                           0.98     10000
+   macro avg       0.98      0.98      0.98     10000
+weighted avg       0.98      0.98      0.98     10000
+
+
+< 데이터 불균형 준 뒤 학습한  (animal : 20000 -> 1000) >
+
+              precision    recall  f1-score   support
+
+           0 (vehicle)      0.98      0.97      0.98      4000
+           1 (animal)      0.98      0.99      0.98      6000
+
+    accuracy                           0.98     10000
+   macro avg       0.98      0.98      0.98     10000
+weighted avg       0.98      0.98      0.98     10000
+
+
+결과분석 : 
+학습 데이터에서 animal 클래스를 1,000개로 줄여 강한 불균형(20:1)을 인위적으로 구성하였으나,
+ResNet18 모델은 test set에서 98% 이상의 정확도를 유지하였다. 특히 소수 클래스(animal)의 
+recall이 0.99로 유지되어 클래스 편향이 거의 발생하지 않음을 확인함
+vehicle vs animal의 특칭 차이가 뚜렷함, 다중 10-class보다 단순함, ResNet18과 사전학습 정규화의 표현력이 강하다는 
+이유로 데이터 불균형을 주어도 안정적으로 탐지함을 확인함.
 
 
