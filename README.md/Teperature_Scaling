@@ -41,17 +41,52 @@ y축(Empirical Accuracy) : 실제로 해당 Confidence 구간에서 정답이었
 <Temperature Scaling> :
 모델 weight(구조)는 그대로 두고 Validation set 에서 “확률이 가장 잘 맞도록” 만드는 
 T를 찾는 것
+
+<softmax z / T>
+   - z : softmax 이전 logits
+        z는 모델의 마지막 선형층에서 출력되는 logits이며, temperature scaling은 
+        softmax 이전의 logits을 스케일링하여 확률 분포의 날카로움을 조정하는 기법
   - T = 1 : 기본 소프트맥스 함수와 동일
   - T > 1 :
     확률 분포가 부드러워지고(flat), 가장 높은 확률값과 낮은 확률 값 사이의 차이가 줄어듬
   - T < 1 : 
     확률 분포가 뾰족해지고(peak), 가장 
-  - 1이상의 값으로 로직을 나누는 경우 :
-    다양성을 증가시키고 더많은 실수를 유발함
-출력 확률을 부드럽게 조정하는 방법(덜 자신있는 방향으로)
+  - 1이상의 값으로 로직을 나누는 경우 : 
+    확률 분포의 날카로움을 완화하여 과도한 확신을 줄임
 
+<Temperature Scaling이 low-capacity method인 이유> : 
+Calibration을 위해 학습하는 파라미터가 단 하나(스칼라)뿐인 매우 단순한 모델이기 때문
 
-<Temperature Scaling을 통한 Calibration 개선>
+<Temperature Scaling이 OOD에서 한계인 이유> : 
+Temperature Scaling은 동일한 분포 내에서의 신뢰도 보정에는 탁월하지만 데이터 자체가 다른 OOD
+상황에서는 잘못된 예측에 대한 강한 확신(Overconfidence)을 본질적으로 해결하지 못하고
+오직 동일한 데이터셋에서 학습된 파라미터에 의존하기 때문에 한계가 있음
+
+<CE 학습은 overconfidence를 유발하는지?> : 
+모델이 훈련 데이터의 정확도뿐만 아니라확률값 자체를 1 또는 0에 가깝게 만들도록
+강제(Maximum Likelihood Estimation)하기 때문
+
+<ECE가 미분 불가능한 이유> : 
+1. ECE는 모델의 예측 확률(Confidence)을 특정 구간(Bin)으로 나눔.
+모델의 파라미터가 미세하게 변하더라도데이터 포인트가 빈 경계면에 있다면 빈을 이동하게 되어
+ECE 값이 급격히 변함. 이는 함수가 불연속적임을 의미하며 미분(Gradient)이 정의되지 않거나 0이 됨
+2. ECE는 각 빈 내부의 accuracy(정확도) - confidence(평균 확률) 차이를 계산함
+0/1 정확도는 연속적인 함수가 아니기 때문에파라미터에 대한 미분을 통해 '어떻게 하면 정확도를 높일지'에
+대한 기울기(Gradient)를 제공하지 못함
+
+<Temperature Scaling 해도 Accuracy는 거의 유지되는 이유> :
+모든 클래스의 로짓(logits)에 동일한 T를 나누기 때문에 원래 로짓 값이 컸던 클래스는
+여전히 가장 큰 값을 가짐
+
+<Temperature Scaling이 NLL에 최적인 이유> :
+NLL은 연속적이고 미분 가능하기 때문에 최적화가 가능함.
+반면 ECE는 bin 기반으로 불연속적이므로 직접 최적화하기 어려움.
+
+<Temperature Scaling이 T 하나로도 개선이 가능한 이유> : 
+현대 딥러닝 모델의 보정 오류가 주로 전반적인 과신(Overconfidence)이라는 단일 패턴으로 나타나며
+이를 일괄적으로 완화(Softening)하는 것만으로도 충분하기 때문
+
+<Temperature Scaling을 통한 Calibration 개선> : 
 본 모델은 Validation 데이터에서 ECE 0.00887을 기록함.
 Temperatur Scaling 을 통해 최적 Temperature : : 1.119456648826599 을 발견하였으며,
 Temperature Scaling을 적용한 결과 ECE는 0.00680으로 감소함.
@@ -60,3 +95,43 @@ Temperature Scaling을 적용한 결과 ECE는 0.00680으로 감소함.
 해당 실험을 통해 단순 정확도뿐 아니라,
 모델의 확률적 신뢰도까지 체계적으로 개선 및 검증함.
 
+<Droput> :
+신경망 학습 과정에서 과적합을 방지하기 위해 사용되는 기법으로
+이 방법은 학습 단계마다 무작위로 일부 뉴런을 비활성화(즉, 드롭아웃) 시킴으로써,
+신경망이 특정 뉴런에 과도하게 의존하는 것을 방지함. 
+드롭아웃은 각 학습 단계에서 랜덤하게 선택된 뉴런을 일시적으로 제거함으로써, 
+네트워크가 더 강건하게 데이터의 다양한 패턴을 학습하도록
+
+<Monte Carlo Dropout 사용한 실험>
+Monte Carlo Dropout을 적용하여 동일 입력에 대해 여러 번 확률 예측을 수행하고 
+평균(mean)과 분산(variance)을 계산함. 정상 랜덤 입력에서는 평균 예측이 0.53/0.47 
+수준으로 중립적이며 분산이 0.002~0.004로 낮아 예측이 안정적임. 
+반면 강한 노이즈(OOD) 입력에서는 평균 예측이 0.76~0.81로 높은 confidence를 보였지만 
+분산이 0.058~0.104로 크게 증가하여 예측이 불안정함을 확인함. 
+이는 softmax confidence만으로는 OOD에서 과신을 구분하기 어렵고, 
+MC Dropout 기반의 epistemic uncertainty(불확실성) 추정이 위험 상황에서 
+판단 보류/재검토와 같은 안전한 의사결정 설계에 유용함을 보여줌.
+
+<Uncertainty-aware Video Classification for Robust OOD Detection in Medical Imaging> :
+의료 영상 기반 딥러닝 모델은 높은 분류 성능을 보이나,
+OOD(out-of-distribution) 상황에서 과도한 confidence를 출력하는 문제가 존재함.
+Softmax confidence는 확률 합이 1이 되도록 정규화되기 때문에,
+입력 분포가 크게 변해도 높은 확신을 유지할 수 있음.
+따라서 단순 정확도뿐 아니라 calibration 및 epistemic uncertainty 추정이 중요함
+-모델 구조
+3D CNN 기반 binary classification
+Conv3D + BatchNorm3D + ReLU
+AdaptiveAvgPool3D
+Fully connected layer
+-OOD 생성 방식 : 입력 노이즈 스케일을 점진적으로 증가
+-입력 노이즈 스케일 증가시 :
+Softmax entropy는 감소
+Confidence는 유지
+MC variance는 증가
+이는 softmax confidence가 OOD 상황에서 신뢰할 수 없는 지표임을 보여줌.
+- 결과 해석 :
+Softmax는 logit magnitude 증가에 따라 확률이 극단화되며,
+이는 entropy 감소로 이어짐.
+그러나 Monte Carlo Dropout 및 Deep Ensemble은
+모델 간 예측 불일치를 통해 epistemic uncertainty를 반영하여
+OOD 상황에서 더 신뢰할 수 있는 위험 신호를 제공.
