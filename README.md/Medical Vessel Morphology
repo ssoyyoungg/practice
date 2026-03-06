@@ -1,0 +1,27 @@
+<Pipeline>
+image
+-> segmentation
+->skeletonization
+->morphology feature extraction
+
+<Feature>
+- path_lenght
+- tortuosity
+- branch_points
+- endpoints
+- branch_density
+
+<핵심결과>
+vessel          tortuosity
+straight        ~1.00
+mild_curve      ~1.03
+curved          ~1.14
+branch          ~1.51
+
+=> 
+  - 혈관이 구불구불 할 수록 tortuosity 증가
+  - 분지 구조가 많을수록 branch_feature 증가
+  - morphology feature로 혈관 구조 정량화 가능
+
+Skeleton 기반 morphology 분석을 통해 혈관 구조의 특징을 정량적으로 표현할 수 있음을 확인
+이러한 형태학적 특징들은 실제 연구에서 뇌혈관 질환 위험을 분석하는데 사용함을 확인
